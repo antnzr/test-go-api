@@ -1,18 +1,54 @@
 package apiserver
 
 import (
-	"github.com/antnzr/test-go-api/internal/app/store"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"io"
+	"context"
+	"github.com/antnzr/test-go-api/internal/app/store/mongostore"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"log"
 	"net/http"
+	"time"
 )
 
-type ApiServer struct {
+func Start(config *Config) error {
+	db, err := newDb(config.DatabaseUrl)
+	if err != nil {
+		return err
+	}
+
+	store := mongostore.New(db)
+	server := newServer(store)
+
+	return http.ListenAndServe(config.BindAddr, server)
+}
+
+func newDb(databaseUrl string) (*mongo.Database, error) {
+	clientOptions := options.Client().ApplyURI(databaseUrl)
+	client, err := mongo.NewClient(clientOptions)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+
+	defer cancel()
+
+	err = client.Ping(context.Background(), readpref.Primary())
+	if err != nil {
+		log.Fatal("Couldn't connect to the database", err)
+	} else {
+		log.Println("Connected!")
+	}
+
+	db := client.Database("test-go-api")
+
+	return db, nil
+}
+
+/*type ApiServer struct {
 	config *Config
 	logger *logrus.Logger
 	router *mux.Router
-	store  *store.Store
+	store  *mongostore.Store
 }
 
 func New(config *Config) *ApiServer {
@@ -59,7 +95,7 @@ func (s *ApiServer) handleHello() http.HandlerFunc {
 }
 
 func (s *ApiServer) configureStore() error {
-	st := store.New(s.config.Store)
+	st := mongostore.New(s.config.Store)
 	if err := st.Open(); err != nil {
 		return err
 	}
@@ -68,3 +104,4 @@ func (s *ApiServer) configureStore() error {
 
 	return nil
 }
+*/
