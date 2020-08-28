@@ -19,14 +19,24 @@ func (repo *UserRepository) Create(usr *model.User) error {
 		return err
 	}
 
-	repo.users[usr.Email] = usr
-	usr.ID = string(len(repo.users))
+	usr.ID = string(len(repo.users) + 1)
+	repo.users[usr.ID] = usr
 
 	return nil
 }
 
 func (repo *UserRepository) FindByEmail(email string) (*model.User, error) {
-	usr, ok := repo.users[email]
+	for _, usr := range repo.users {
+		if usr.Email == email {
+			return usr, nil
+		}
+	}
+
+	return nil, store.ErrRecordNotFound
+}
+
+func (repo *UserRepository) Find(id string) (*model.User, error) {
+	usr, ok := repo.users[id]
 	if !ok {
 		return nil, store.ErrRecordNotFound
 	}

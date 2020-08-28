@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"github.com/antnzr/test-go-api/internal/app/store/mongostore"
+	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -18,7 +19,8 @@ func Start(config *Config) error {
 	}
 
 	store := mongostore.New(db)
-	server := newServer(store)
+	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey))
+	server := newServer(store, sessionStore)
 
 	return http.ListenAndServe(config.BindAddr, server)
 }

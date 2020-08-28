@@ -1,5 +1,6 @@
 bind_addr = ":8080"
 log_level = "debug"
+session_key = "afhdjgajkhgdfkagjdfjahjfdakjfakfhagfkajfakfa"
 
 db_url = "mongodb://localhost:27017/test-go-api"
 db_name = "test-go-api"

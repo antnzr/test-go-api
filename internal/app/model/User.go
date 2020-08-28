@@ -7,11 +7,11 @@ import (
 )
 
 type User struct {
-	ID           string `json:"_id"`
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	Password     string
-	PasswordHash string    `json:"password_hash"`
+	ID           string    `json:"id"bson:"_id"`
+	Name         string    `json:"name"`
+	Email        string    `json:"email"`
+	Password     string    `json:"password,omitempty"`
+	PasswordHash string    `json:"-"bson:"password_hash"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -37,6 +37,14 @@ func (usr *User) BeforeCreate() error {
 		usr.PasswordHash = enc
 	}
 	return nil
+}
+
+func (usr *User) Sanitize() {
+	usr.Password = ""
+}
+
+func (usr *User) ComparePassword(password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(password)) == nil
 }
 
 func encryptString(str string) (string, error) {
